@@ -1,0 +1,103 @@
+flowchart TB
+    subgraph main_flow["LangGraph 상위 리포트 흐름"]
+        direction TB
+
+        collected["기획 필드 수집 완료"]
+        selfcheck_node["자가점검 리포트 생성"]
+        confirm["작성 내용 확인"]
+        decision{"사용자 선택"}
+        save["메타데이터 / 임베딩 저장"]
+        similar_node["유사 프로젝트 리포트 생성"]
+        cross_node["Cross-Insight 생성"]
+        mentor_node["멘토링 리포트 생성"]
+
+        collected --> selfcheck_node
+        selfcheck_node --> confirm
+        confirm --> decision
+        decision -->|"수정 요청"| collected
+        decision -->|"저장 승인"| save
+        save --> similar_node
+        similar_node --> cross_node
+        cross_node --> mentor_node
+    end
+
+    subgraph selfcheck_flow["자가점검 리포트 내부 흐름"]
+        direction TB
+
+        sc_start["기획안 입력"]
+        sc_prepare["평가용 JSON 정리"]
+        sc_available{"구조화 평가 가능?"}
+        sc_generate["명확성 / 완성도 / 리스크 평가"]
+        sc_valid{"출력 검증 성공?"}
+        sc_fallback["기본 점검 리포트 생성"]
+        sc_result["자가점검 리포트"]
+
+        sc_start --> sc_prepare
+        sc_prepare --> sc_available
+        sc_available -->|"예"| sc_generate
+        sc_available -->|"아니오"| sc_fallback
+        sc_generate --> sc_valid
+        sc_valid -->|"예"| sc_result
+        sc_valid -->|"아니오"| sc_fallback
+        sc_fallback --> sc_result
+    end
+
+    subgraph similar_flow["유사 프로젝트 리포트 내부 흐름"]
+        direction TB
+
+        sim_start["저장된 기획안"]
+        sim_count{"비교 대상 충분?"}
+        sim_empty["분석 불가 메시지"]
+        sim_embed["검색용 임베딩 생성"]
+        sim_search["벡터 유사도 검색"]
+        sim_filter["본인 제외<br>공개 범위 반영"]
+        sim_analyze["유사도 점수 / 위험도 / 근거 생성"]
+        sim_result["유사 프로젝트 리포트"]
+
+        sim_start --> sim_count
+        sim_count -->|"아니오"| sim_empty
+        sim_count -->|"예"| sim_embed
+        sim_embed --> sim_search
+        sim_search --> sim_filter
+        sim_filter --> sim_analyze
+        sim_analyze --> sim_result
+        sim_empty --> sim_result
+    end
+
+    subgraph cross_flow["Cross-Insight 내부 흐름"]
+        direction TB
+
+        cross_start["유사 프로젝트 리포트"]
+        cross_exists{"유사 결과 있음?"}
+        cross_skip["인사이트 없음"]
+        cross_select["대표 유사 프로젝트 선택"]
+        cross_generate["차별화 / 타겟 / MVP 개선점 생성"]
+        cross_result["Cross-Insight"]
+
+        cross_start --> cross_exists
+        cross_exists -->|"아니오"| cross_skip
+        cross_exists -->|"예"| cross_select
+        cross_select --> cross_generate
+        cross_generate --> cross_result
+        cross_skip --> cross_result
+    end
+
+    subgraph mentor_flow["멘토링 리포트 내부 흐름"]
+        direction TB
+
+        mentor_start["기획안 + 분석 결과"]
+        mentor_summary["1분 발표 요약 생성"]
+        mentor_diff["차별화 포인트 정리"]
+        mentor_qna["예상 질문 / 답변 생성"]
+        mentor_result["멘토링 리포트"]
+
+        mentor_start --> mentor_summary
+        mentor_summary --> mentor_diff
+        mentor_diff --> mentor_qna
+        mentor_qna --> mentor_result
+    end
+
+    selfcheck_node -.-> sc_start
+    similar_node -.-> sim_start
+    cross_node -.-> cross_start
+    mentor_node -.-> mentor_start

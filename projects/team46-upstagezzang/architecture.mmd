@@ -1,0 +1,59 @@
+flowchart TB
+    subgraph user_flow["그림 1. 사용자 인터랙션 흐름"]
+        direction LR
+
+        user["사용자"]
+        chat["채팅 인터페이스"]
+        question["추가 질문"]
+        confirm["작성 내용 확인<br>자가점검 리포트"]
+        final_result["최종 결과"]
+        similarity["유사도 분석"]
+        insight["Cross-Insight"]
+        mentoring["멘토링 리포트"]
+
+        user <-->|"기획 내용 입력 / 추가 답변"| chat
+        chat -->|"정보 부족"| question
+        question -->|"답변 반영"| chat
+        chat -->|"필수 정보 충족"| confirm
+        confirm -->|"수정 요청"| chat
+        confirm -->|"저장 승인"| final_result
+        final_result --> similarity
+        final_result --> insight
+        final_result --> mentoring
+    end
+
+    subgraph internal_flow["그림 2. 내부 동작 흐름"]
+        direction TB
+
+        chat_input["채팅 입력"]
+        state_load["LangGraph 상태 로드"]
+        extract["필드 추출"]
+        missing{"누락 항목 있음?"}
+        ask["다음 질문 생성"]
+        show_question["질문 표시"]
+        selfcheck["자가점검 생성"]
+        show_confirm["작성 내용 확인<br>자가점검 리포트 표시"]
+        decision{"사용자 선택"}
+        save_project["메타데이터 / 임베딩 저장"]
+        search["유사 프로젝트 검색"]
+        analyze["유사도 분석 생성"]
+        cross["Cross-Insight 생성"]
+        mentor["멘토링 리포트 생성"]
+
+        chat_input --> state_load
+        state_load --> extract
+        extract --> missing
+        missing -->|"예"| ask
+        ask --> show_question
+        show_question --> chat_input
+        missing -->|"아니오"| selfcheck
+        selfcheck --> show_confirm
+        show_confirm --> decision
+        decision -->|"수정 요청"| chat_input
+        decision -->|"저장 승인"| save_project
+        save_project --> search
+        search --> analyze
+        analyze --> cross
+        cross --> mentor
+
+    end

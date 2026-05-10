@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+    chromadb:
+        image: docker.io/chromadb/chroma:latest
+        container_name: asmchat-chromadb
+        ports:
+            - '8001:8000'
+        volumes:
+            - ./data/chroma:/data
+        environment:
+            - IS_PERSISTENT=TRUE
+            - PERSIST_DIRECTORY=/data
+            - ANONYMIZED_TELEMETRY=FALSE
+        healthcheck:
+            test: ['CMD', 'bash', '-lc', '</dev/tcp/localhost/8000']
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 20s
+
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: asmchat-app
+        ports:
+            - '8501:8501'
+        volumes:
+            - ./data:/app/data
+            - ./.env:/app/.env:ro
+        environment:
+            - CHROMA_HOST=chromadb
+            - CHROMA_PORT=8000
+        depends_on:
+            chromadb:
+                condition: service_healthy
+        stdin_open: true
+        tty: true

@@ -1,0 +1,29 @@
+default:
+    nix flake check
+
+dev:
+    nix develop
+
+run:
+    nix run
+
+streamlit:
+    PYTHONPATH=. uv run streamlit run src/main.py
+
+api:
+    PYTHONPATH=. uv run uvicorn src.api:app --reload --port 8000
+
+lock:
+    uv lock
+
+sync:
+    uv sync
+
+ruff:
+    ruff check src/
+
+ruff-fix:
+    ruff check --fix src/
+
+clean:
+    rm -rf data/ .venv/ __pycache__/ src/__pycache__/
